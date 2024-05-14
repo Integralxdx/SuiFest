@@ -1,0 +1,2 @@
+# SuiFest
+Sui Hackathon project 
