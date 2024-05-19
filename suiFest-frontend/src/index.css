@@ -1,0 +1,66 @@
+/* :root {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  color-scheme: light dark;
+  color: rgba(255, 255, 255, 0.87);
+  background-color: #242424;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+} */
+*,
+*::after,
+*::before {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: "Lato", sans-serif;
+  font-weight: 400;
+  font-style: normal;
+  width: 100vw;
+  /* min-height: 100vh; */
+  background-image: url("/assets/images/hexagon-mobile.svg");
+  position: relative;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+
+
+}
+
+body::after {
+  content: "";
+  position: absolute;
+  height: 100%;
+  backdrop-filter: blur(800px);
+  background: orange;
+  -webkit-backdrop-filter: blur(800px);
+  /* For Safari */
+  /* position: relative; */
+}
+
+button {
+
+  font-family: "Lato", sans-serif;
+  font-weight: 400;
+  font-style: normal;
+}
+
+
+
+@media (min-width: 769px) {
+
+  body {
+
+    height: 100vh;
+    background-size: 100%;
+    background-image: url("/assets/images/hexagon.svg");
+  }
+}
