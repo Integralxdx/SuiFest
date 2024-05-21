@@ -122,6 +122,7 @@ const Home = () => {
         {/* hhhh */}
         <div style={{ position: "absolute" }}>
           <LogoWithText color="black" />
+
         </div>
 
         <MainSection>
