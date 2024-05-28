@@ -11,17 +11,7 @@ module suifest::suifest {
     use sui::balance::{Self, Balance};
 
 
-    // public struct UserEvents has key {
-    //     id: UID,
-    //     event_owner_cap: ID,
-    //     balance: Balance<SUI>,
-    //     events: vector<Event>
-    // }
-
-    // public struct EventOwnerCapability has key {
-    //     id: UID,
-    //     event: ID,
-    // }
+  
 
     public struct Event has key {
         id: UID,
@@ -34,6 +24,10 @@ module suifest::suifest {
         max_attendees: u64,
         attendees: vector<address>
     }
+
+    // public fun ticket(){
+
+    // }
 
     public fun create_event(name: String, description: String, location: String, date: String, ticket_price: u64, max_attendees: u64, ctx: &mut TxContext) {
         let host = tx_context::sender(ctx);
@@ -73,9 +67,3 @@ module suifest::suifest {
     }
 
 }
-
-// ///$ export PACKAGE_ID=0x468daa33dfcb3e17162bbc8928f6ec73744bb08d838d1b6eb94eac99269b29fe
-// $ export MY_ADDRESS=$(sui client active-address)
-// sui client call --function create_event --module suifest --package $PACKAGE_ID --args "Techie" "some desc" "Lag" "23-01-2024" 1 100 --gas-budget 10000000
-// sui client call --function edit_event --module suifest --package $PACKAGE_ID --args 0x43b7abd8e84f129f0923d19588ca2efbb5c1429dc6418db2820fa223ed45bdd8 "Techie" "some desc" "Lagos" "25-01-2024" 1 200 --gas-budget 10000000
-//sui keytool import "$ADMIN_PHRASE" ed25519
