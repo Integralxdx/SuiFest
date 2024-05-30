@@ -8,28 +8,31 @@ const COLOR = {
 };
 
 const StyledButton = styled.button`
-  padding: 10px 20px;
+  padding: 15px 20px;
   background-color: ${(props) => COLOR[props.$color]};
   color: white;
   -webkit-tap-highlight: none;
   border: 0px;
-  border-radius: 4px; 
-  font-size: 15px; 
+  border-radius: 4px;
+  font-size: 20px;
   &:hover {
-      opacity: 70%;
-      background-color: none;
+    opacity: 70%;
+    background-color: none;
     outline: none;
-    cursor: pointer
-}
+    cursor: pointer;
+  }
 
-@media (min-width: 769px){
+  @media (min-width: 769px) {
     padding: 20px 40px;
-    font-size: 20px; 
-
+    font-size: 20px;
   }
 `;
-const Button = ({ children, type = "primary" }) => {
-  return <StyledButton $color={type}>{children}</StyledButton>;
+const Button = ({ children, type = "primary", onClick }) => {
+  return (
+    <StyledButton $color={type} onClick={onClick}>
+      {children}
+    </StyledButton>
+  );
 };
 
 export default Button;

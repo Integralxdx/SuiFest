@@ -35,6 +35,13 @@ body {
 
 }
 
+input,
+textarea {
+  font-family: "Lato", sans-serif;
+  font-weight: 400;
+  font-style: normal;
+}
+
 body::after {
   content: "";
   position: absolute;
@@ -53,6 +60,20 @@ button {
   font-style: normal;
 }
 
+li {
+  list-style-type: none;
+}
+
+a {
+  text-decoration: none;
+  color: initial;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #4e4c51;
+  opacity: 45%;
+}
 
 
 @media (min-width: 769px) {
@@ -62,5 +83,32 @@ button {
     height: 100vh;
     background-size: 100%;
     background-image: url("/assets/images/hexagon.svg");
+    background-repeat: repeat-y;
   }
 }
+
+
+@keyframes swing {
+  from {
+    transform: rotate(5deg);
+  }
+  to {
+    transform: rotate(-5deg);
+  }
+}
+
+@keyframes pulse2 {
+	0% {
+		transform: scale(0.7, 0.7);
+		opacity: 0;
+	}
+
+	50% {
+	    opacity: 0.5;
+	}
+
+	100% {
+	    transform: scale(1, 1);
+	    opacity: 1;
+		}
+	}

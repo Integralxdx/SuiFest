@@ -17,15 +17,16 @@ const Wrapper = styled(Link)`
   & > span {
     color: ${(props) => props.$color || "#000"};
   }
-  `;
+`;
 
 const LogoText = styled.p`
-font-family: "Potta One", system-ui;
-font-weight: 400;
-font-size: 32px;
-font-style: normal;
-color: ${(props) => props.$color || "#000"};
-  
+  font-family: "Potta One", system-ui;
+  font-weight: 400;
+  font-size: 18px;
+  font-style: normal;
+  color: ${(props) => props.$color || "#000"};
+  position: relative;
+  transform: translateX(-10%);
 `;
 
 const LogoWithText = ({ color }) => {
@@ -37,7 +38,7 @@ const LogoWithText = ({ color }) => {
           height: "max-content",
           color: `black`,
           /* display: inline-block; */
-          transform: "scale(0.8) translateX(6px)",
+          transform: "scale(0.5) translateX(16px)",
         }}
       >
         <Logo />
