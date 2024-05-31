@@ -16,6 +16,7 @@
     "@mysten/zklogin": "^0.6.3",
     "@tanstack/react-query": "^5.40.0",
     "axios": "^1.7.2",
+    "bignumber.js": "^9.1.2",
     "jwt-decode": "^4.0.0",
     "notistack": "^3.0.1",
     "query-string": "^9.0.0",
@@ -23,7 +24,8 @@
     "react-dom": "^18.2.0",
     "react-lottie": "^1.2.4",
     "react-router-dom": "^6.23.1",
-    "styled-components": "^6.1.11"
+    "styled-components": "^6.1.11",
+    "uint8-to-base64": "^0.2.0"
   },
   "devDependencies": {
     "@svgr/cli": "^8.1.0",

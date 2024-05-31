@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { styled } from "styled-components";
 import { Copy, Exit, Logo } from "../../components/Icon/icons";
 import LogoWithText from "../../components/LogoWithText/LogoWithText";
@@ -7,6 +7,8 @@ import animationData from "../../assets/animations/flags-garland.json";
 import CameraAnimation from "../../assets/animations/camera.json";
 import Lottie from "react-lottie";
 import { Link, useNavigate } from "react-router-dom";
+
+import BigNumber from "bignumber.js";
 
 import queryString from "query-string";
 // import { fromB64 } from "@mysten/bcs";
@@ -31,17 +33,22 @@ import {
   KEY_PAIR_SESSION_STORAGE_KEY,
   MAX_EPOCH_LOCAL_STORAGE_KEY,
   RANDOMNESS_SESSION_STORAGE_KEY,
+  REDIRECT_URI,
   SUI_DEVNET_FAUCET,
   USER_SALT_LOCAL_STORAGE_KEY,
 } from "../../constants";
 import { getParams } from "../zklogin";
-import { decodeSuiPrivateKey } from "@mysten/sui.js/cryptography";
+import {
+  decodeSuiPrivateKey,
+  encodeSuiPrivateKey,
+} from "@mysten/sui.js/cryptography";
 
 import { jwtDecode } from "jwt-decode";
 import useCopyToClipboard from "../../utils/hooks/useCopyToClipboard";
 
 import { formatAddress } from "@mysten/sui.js/utils";
 import { enqueueSnackbar } from "notistack";
+// import getSigner from "../../utils/helpers/getSigner";
 
 const Wrapper = styled.section`
   width: 100vw;
@@ -141,7 +148,7 @@ const CameraAnimationWrapper = styled(AnimationWrapper)`
     right: 120%;
     bottom: -40%;
   }
-`
+`;
 
 const suiClient = new SuiClient({ url: FULLNODE_URL });
 
@@ -208,15 +215,15 @@ const LoggedIndicatorWrapper = styled.div`
   }
 `;
 
-function getEd25519Keypair(jwt_data) {
-  const publicKey = new Uint8Array(
-    Object.values(jwt_data.ephemeralKeyPair.keypair.publicKey)
-  );
-  const secretKey = new Uint8Array(
-    Object.values(jwt_data.ephemeralKeyPair.keypair.secretKey)
-  );
-  return new Ed25519Keypair({ publicKey, secretKey });
-}
+// function getEd25519Keypair(jwt_data) {
+//   const publicKey = new Uint8Array(
+//     Object.values(jwt_data.ephemeralKeyPair.keypair.publicKey)
+//   );
+//   const secretKey = new Uint8Array(
+//     Object.values(jwt_data.ephemeralKeyPair.keypair.secretKey)
+//   );
+//   return new Ed25519Keypair({ publicKey, secretKey });
+// }
 
 const BalanceWrapper = styled.div`
   font-size: 13px;
@@ -227,20 +234,34 @@ const BalanceWrapper = styled.div`
 const BalanceLoggedWrapper = styled.div`
   display: flex;
   flex-direction: column-reverse;
- 
+
   align-items: center;
   & span {
     display: inline-block;
   }
 
   @media (min-width: 769px) {
-    flex-direction: row;  
+    flex-direction: row;
     gap: 20px;
+  }
+`;
+
+const RequestSuiWrapper = styled.button`
+  font-size: 12px;
+  background: rgba(0, 0, 0, 0.7);
+  color: #fafafa;
+  padding: 12px;
+  border-radius: 20px;
+  &:disabled {
+    opacity: 0.5;
+  }
+  @media (min-width: 769px){
+    font-size: 14px;
   }
 `;
 const Home = () => {
   // const navigate = useNavigate();
-
+  // const signer    = getSigner()
   const [copied, setCopied] = useCopyToClipboard();
 
   const [copiedTimer, setStartCopiedTimer] = useState(false);
@@ -301,6 +322,8 @@ const Home = () => {
         const salt = generateRandomness();
         window.localStorage.setItem(USER_SALT_LOCAL_STORAGE_KEY, salt);
         setUserSalt(salt);
+        const zkLoginUserAddress = jwtToAddress(oauthParams?.id_token, salt);
+        setZkLoginUserAddress(zkLoginUserAddress);
       }
 
       if (userSalt) {
@@ -318,7 +341,7 @@ const Home = () => {
       if (!!zkLoginUserAddress.length) {
         const jwt_data = JSON.parse(window.sessionStorage.getItem("jwt_data"));
         // if(!)
-        const keypair = getEd25519Keypair(jwt_data);
+        const keypair = getEd25519Keypair(jwt_data?.ephemeralKeyPair);
         const extendedEphemeralPublicKey = getExtendedEphemeralPublicKey(
           keypair.getPublicKey()
         );
@@ -341,18 +364,32 @@ const Home = () => {
         );
         setZkProof(zkProofResult?.data);
         setFetchingZKProof(false);
-        if (addressBalance && parseInt(addressBalance.totalBalance) == 0)
-          requestFaucet();
+        // if (addressBalance && parseInt(addressBalance.totalBalance) == 0) {
+        //   requestFaucet();
+        // }
 
-        const partialZkLoginSignature = zkProofResult;
+        // const partialZkLoginSignature = zkProofResult;
       }
     })();
     return () => {};
   }, [zkLoginUserAddress]);
   useEffect(() => {
-    //   const privateKey = window.sessionStorage.getItem(
-    //     KEY_PAIR_SESSION_STORAGE_KEY
-    //   );
+    const jwt_data = JSON.parse(window.sessionStorage.getItem("jwt_data"));
+
+    // console.log({ jwt_data });
+
+    // console.log(
+    //   Object.values(jwt_data?.ephemeralKeyPair?.keypair?.secretKey).length
+    // );
+
+    // const encoded = encodeSuiPrivateKey(
+    //   Object.values(jwt_data?.ephemeralKeyPair?.keypair?.secretKey),
+    //   "ED25519"
+    // );
+
+    // const { schema, secretKey } = decodeSuiPrivateKey(encoded);
+    // const keypair = Ed25519Keypair.fromSecretKey(secretKey);
+    // console.log({ secretKey, keypair });
     //   if (privateKey) {
     //     const ephemeralKeyPair = Ed25519Keypair.fromSecretKey(
     //       fromB64(privateKey)
@@ -377,9 +414,7 @@ const Home = () => {
     // }
   }, []);
 
- 
-
-  const requestFaucet = async () => {
+  const requestFaucet = useCallback(async () => {
     if (!zkLoginUserAddress) {
       return;
     }
@@ -400,7 +435,7 @@ const Home = () => {
     } finally {
       setRequestingFaucet(false);
     }
-  };
+  }, [zkLoginUserAddress]);
   return (
     <Wrapper>
       <ContentWrapper>
@@ -422,12 +457,22 @@ const Home = () => {
             <BalanceLoggedWrapper>
               <BalanceWrapper>
                 <span>
-                  {addressBalance
-                    ? parseFloat(addressBalance?.totalBalance).toFixed(2)
+                  {addressBalance && addressBalance?.totalBalance
+                    ? parseFloat(
+                        BigNumber(
+                          Number(addressBalance?.totalBalance)
+                        ).dividedBy(BigNumber(Number(MIST_PER_SUI)))
+                      ).toFixed(2)
                     : "--"}
                 </span>{" "}
                 <span>SUI</span>
               </BalanceWrapper>
+              <RequestSuiWrapper
+                disabled={requestingFaucet}
+                onClick={() => requestFaucet()}
+              >
+                {requestingFaucet ? "Requesting" : "Request SUI"}
+              </RequestSuiWrapper>
               <LoggedIndicatorWrapper style={{ position: "relative" }}>
                 <LoggedInIndicator
                   onClick={() => setToggleLoggedModal(!toggleLoggedModal)}
@@ -478,17 +523,21 @@ const Home = () => {
                 const ephemeralKeyPair = Ed25519Keypair.generate();
 
                 const randomness = generateRandomness();
-                
+
                 const nonce = generateNonce(
                   ephemeralKeyPair.getPublicKey(),
                   maxEpoch,
                   randomness
                 );
-               
+
                 setEphemeralKeyPair(ephemeralKeyPair);
                 setNonce(nonce);
                 setMaxEpoch(maxEpoch);
                 setRandomness(randomness);
+                window.sessionStorage.setItem(
+                  "priv",
+                  ephemeralKeyPair.export().privateKey
+                );
 
                 const jwtData = {
                   maxEpoch,

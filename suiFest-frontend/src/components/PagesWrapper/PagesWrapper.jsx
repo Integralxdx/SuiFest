@@ -40,8 +40,8 @@ const PagesWrapper = ({ children, title, elementBelowTitle }) => {
   return (
     <Wrapper>
       <div style={{ position: "absolute", top: "0px", left: "0px" }}>
-        {/* <LogoWithText color="black" /> */}
-        <Button>Login</Button>
+        <LogoWithText color="black" />
+        {/* <Button>Login</Button> */}
       </div>
       <HeaderBanner>
         <div>

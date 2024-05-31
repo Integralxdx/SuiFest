@@ -18,7 +18,6 @@ const { epoch, epochDurationMs, epochStartTimestampMs } =
   await suiClient.getLatestSuiSystemState();
 
 export const getParams = () => {
-  console.log("HI");
   const maxEpoch = Number(epoch) + 2; // this means the ephemeral key will be active for 2 epochs from now.
   const ephemeralKeyPair = Ed25519Keypair.generate();
   

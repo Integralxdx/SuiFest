@@ -83,9 +83,10 @@ const CalendarDayMonth = styled.div`
 `;
 
 const ImageWrapper = styled.div`
+  margin: 70px 0;
   // fill: contain;
   // overflow: hidden;
-
+  position: relative;
   aspect-ratio: 1/1;
   background: #fafafa;
   width: 100%;
@@ -113,7 +114,7 @@ const ImageWrapper = styled.div`
     right: 0;
 
     backdrop-filter: blur(25px);
-    -webkit-backdrop-filter: blur(200px); /* For Safari */
+    -webkit-backdrop-filter: blur(200px); /* Ffor Safari */
     // opacity: 10%;
     z-index: 0;
   }
@@ -123,6 +124,7 @@ const ImageWrapper = styled.div`
 
   @media (min-width: 769px) {
     width: 35%;
+    margin: 0;
   }
 `;
 
@@ -169,20 +171,31 @@ const WelcomeText = styled.div`
 `;
 
 const ThemeSwitch = styled.div`
-  position: absolute;
+  position: relative;
+  top: 90%;
+  bottom: 0;
+  z-index: 100;
   display: flex;
-  flex-direction: column;
-  top: 0%;
-  left: 100%;
-  transform: translateX(20px);
-  z-index: 10px;
-  height: 200px;
+
   gap: 10px;
   & button {
     cursor: pointer;
-    width: 20px;
-    height: 50px;
+    width: 50px;
+    height: 20px;
     background: ${(props) => props?.$themeColor};
+  }
+
+  @media (min-width: 769px) {
+    flex-direction: column;
+    position: absolute;
+    top: 0%;
+    left: 100%;
+    transform: translateX(20px);
+    height: 200px;
+    & button {
+      width: 20px;
+      height: 50px;
+    }
   }
 `;
 const CreateEvent = () => {
