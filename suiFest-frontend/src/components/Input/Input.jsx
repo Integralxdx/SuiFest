@@ -26,16 +26,17 @@ const InputComponent = styled.input`
 `;
 
 
-const Input = ({ value, setValue, placeholder, inputId, type = "text" }) => {
+const Input = ({ value, handleChange, placeholder, inputId, type = "text",disabled }) => {
   return (
     <>
-      {type == "text" ? (
+      {type == "text" || type == "number"  ? (
         <InputComponent
           id={inputId}
           value={value}
           type={type || "text"}
-          onChange={(e) => setValue(e.target.value)}
+          onChange={(e) => handleChange(e.target.value)}
           placeholder={placeholder}
+          disabled={disabled}
         />
       ) : (
         <textarea
@@ -47,8 +48,11 @@ const Input = ({ value, setValue, placeholder, inputId, type = "text" }) => {
           rows="5"
           cols="33"
           value={value}
-          onChange={(e) => setValue(e.target.value)}
+          onChange={(e) => handleChange(e.target.value)}
+      
           placeholder={placeholder}
+
+          disabled={disabled}
         />
       )}
     </>

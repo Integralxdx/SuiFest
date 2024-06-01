@@ -10,6 +10,10 @@ import {
 import Input from "../../../components/Input/Input";
 import Button from "../../../components/Button/Button";
 import PagesWrapper from "../../../components/PagesWrapper/PagesWrapper";
+import dayjs from "dayjs";
+import { EventService } from "../../../utils/helpers/event";
+import { enqueueSnackbar } from "notistack";
+import { EVENT } from "../../../constants";
 
 const THEME = ["#5B3967", "#673939", "#396746", "#616739"];
 
@@ -198,10 +202,55 @@ const ThemeSwitch = styled.div`
     }
   }
 `;
+
+const eventService = new EventService();
 const CreateEvent = () => {
+  const [transaction, setTransaction] = useState("");
+  const [details, setDetails] = useState({
+    [EVENT.TITLE]: "",
+    [EVENT.DESC]: "",
+    [EVENT.LOCATION]: "",
+    [EVENT.NO_OF_ATTENDEES]: "",
+    [EVENT.TICKET]: "",
+  });
   const [startDate, setStartDate] = useState(new Date());
   const [theme, setTheme] = useState(THEME[0]);
+  const [isCreatingEvent, setIsCreatingEvent] = useState(false);
+  const [error, setError] = useState("");
 
+  const handleCreateEvent = async () => {
+    setIsCreatingEvent(true);
+    setError("");
+    try {
+      const transaction = await eventService.create_event({
+        [EVENT.TITLE]: details[EVENT.TITLE],
+        [EVENT.DESC]: details[EVENT.DESC],
+        [EVENT.LOCATION]: details[EVENT.LOCATION],
+        [EVENT.TICKET]: details[EVENT.TICKET],
+        date: dayjs(new Date(startDate)).format("DD-MM-YYYY"),
+        [EVENT.NO_OF_ATTENDEES]: details[EVENT.NO_OF_ATTENDEES],
+      });
+      enqueueSnackbar("Success!", {
+        variant: "success",
+      });
+      setTransaction(transaction);
+      setDetails({
+        [EVENT.TITLE]: "",
+        [EVENT.DESC]: "",
+        [EVENT.LOCATION]: "",
+        [EVENT.NO_OF_ATTENDEES]: "",
+        [EVENT.TICKET]: "",
+      });
+    } catch (err) {
+      setError("Failed to create event");
+      console.log({err})
+      enqueueSnackbar(err, {
+        variant: "error",
+      });
+    } finally {
+      setIsCreatingEvent(false);
+    }
+  };
   return (
     // <Wrapper>
     //   <div style={{ position: "absolute", top: "0px", left: "0px" }}>
@@ -212,7 +261,14 @@ const CreateEvent = () => {
         {/* <ImageInputFieldWrapper> */}
         <InputFieldWrapper>
           <InputFieldItem>
-            <BigInputField placeholder="Event Name" />
+            <BigInputField
+              disabled={isCreatingEvent}
+              placeholder="Event Name"
+              value={details.title}
+              onChange={(e) =>
+                setDetails({ ...details, title: e.target.value })
+              }
+            />
           </InputFieldItem>
           <InputFieldItem style={{ display: "flex", alignItems: "stretch" }}>
             <CalendarDayMonth style={{}}>
@@ -227,17 +283,59 @@ const CreateEvent = () => {
               <Location />
             </LocationIconWrapper>
             <div style={{ flexGrow: 1, height: "48px" }}>
-              <Input placeholder={"Enter event's location"} />
+              <Input
+                disabled={isCreatingEvent}
+                placeholder={"Enter event's location"}
+                value={details?.location}
+                handleChange={(value) =>
+                  setDetails({ ...details, location: value })
+                }
+              />
             </div>
           </InputFieldItem>
-          <InputFieldItem>
+          <InputFieldItem
+            style={{ display: "flex", alignItems: "center", height: "48px" }}
+          >
             <Input
-              placeholder={"Enter event's description"}
-              type={"textarea"}
+              disabled={isCreatingEvent}
+              placeholder={"No of attendees"}
+              type="number"
+              value={details?.attendeesNo}
+              handleChange={(value) =>
+                setDetails({ ...details, attendeesNo: value })
+              }
+            />
+
+            <Input
+              disabled={isCreatingEvent}
+              placeholder={"Value of Ticket Required"}
+              value={details?.ticketvalue}
+              handleChange={(value) =>
+                setDetails({ ...details, ticketvalue: value })
+              }
             />
           </InputFieldItem>
           <InputFieldItem>
-            <Button>Create Event</Button>
+            <Input
+              disabled={isCreatingEvent}
+              placeholder={"Enter event's description"}
+              type={"textarea"}
+              value={details.description}
+              handleChange={(value) =>
+                setDetails({ ...details, description: value })
+              }
+            />
+          </InputFieldItem>
+          <InputFieldItem>
+            <Button
+              disabled={
+                Object.values(details).some((item) => !item.length) ||
+                isCreatingEvent
+              }
+              onClick={handleCreateEvent}
+            >
+              {isCreatingEvent ? "Creating event" : "Create Event"}
+            </Button>
           </InputFieldItem>
         </InputFieldWrapper>
         <ImageWrapper>

@@ -1,3 +1,4 @@
+import { SuiClient, getFullnodeUrl } from "@mysten/sui.js/client";
 const WRAPPER_GENERAL_STYLES = `
 position: relative;
 width: 100%;
@@ -29,7 +30,7 @@ export const RANDOMNESS_SESSION_STORAGE_KEY = "demo_randomness_key_pair";
 
 export const MAX_EPOCH_LOCAL_STORAGE_KEY = "demo_max_epoch_key_pair";
 
-export const REDIRECT_URI = "https://atttendify.web.app/";
+export const REDIRECT_URI = "https://sui-fest.web.app/";
 
 export const STEPS_LABELS_TRANS_KEY = [
   "16e758e8",
@@ -49,3 +50,19 @@ export const STEPS_DESC = [
   "32255d31",
   "8f2433d9",
 ];
+
+// the id of the package of a deployed contract
+export const PUBLIC_PACKAGE_ID =
+  "0xe1c4b27ff18076257ceb19f167f723d5c793818fcf6cce110ac8badf63631315";
+
+export const EVENT = {
+  TITLE: "title",
+  DESC: "description",
+  LOCATION: "location",
+  DATE: "date",
+  NO_OF_ATTENDEES: "attendeesNo",
+  TICKET: "ticketvalue",
+};
+export const PROVER_URL = "https://prover-dev.mystenlabs.com/v1";
+export const WALLET_ADDRESS = "walletAddress";
+export const SUI_CLIENT = new SuiClient({ url: getFullnodeUrl("testnet") });

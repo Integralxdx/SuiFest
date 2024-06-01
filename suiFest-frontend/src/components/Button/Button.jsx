@@ -21,15 +21,21 @@ const StyledButton = styled.button`
     outline: none;
     cursor: pointer;
   }
+  &:disabled {
+    opacity: 40%;
+    background-color: grey;
+    outline: none;
+    cursor: cancelled;
+  }
 
   @media (min-width: 769px) {
     padding: 20px 40px;
     font-size: 20px;
   }
 `;
-const Button = ({ children, type = "primary", onClick }) => {
+const Button = ({ children, type = "primary", onClick, disabled }) => {
   return (
-    <StyledButton $color={type} onClick={onClick}>
+    <StyledButton $color={type} onClick={onClick} disabled={disabled}>
       {children}
     </StyledButton>
   );
