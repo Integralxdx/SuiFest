@@ -234,23 +234,29 @@ export class EventService {
 
   async makeMoveCall(txData, txb) {
     const keypair = getKeyPair();
-    
+
     const sender =
       window.sessionStorage.getItem(WALLET_ADDRESS) ||
       "0xbc50a02252cd66a5028515cd26326329a7057852e58f67dc68ce8dfe75ade4de";
     txb.setSender(sender);
     txb.setGasBudget(100000000);
+    console.log({ gas: txb.gas });
+    const gasAmount = txb.gas / 2;
     // console.log({ gas:  txb.splitCoins(txb.gas, [100]) });
-    const [coin] = txb.splitCoins(txb.gas, [100]);
+    const reference_gas_price = await SUI_CLIENT.getReferenceGasPrice();
+    SUI_CLIENT.
+    console.log({ reference_gas_price });
+    // console.log({gasCoins})
+    // const [coin] = txb.splitCoins(txb.gas, [1000000000]);
     // const [coins] = trx.splitCoins(trx.gas, [trx.pure(convertSUItoMIST(gasFee))]);
-    txb.transferObjects([coin], txb.pure(sender));
+    // txb.transferObjects([coin], txb.pure(sender));
     txb.moveCall(txData);
 
     const { bytes, signature: userSignature } = await txb.sign({
       client: SUI_CLIENT,
       signer: keypair,
     });
-    coin && txb.transferObjects([coin], sender);
+    // coin && txb.transferObjects([coin], sender);
     const zkLoginSignature = await generateZkLoginSignature(userSignature);
     console.log({ zkLoginSignature });
     const transaction1 = SUI_CLIENT.executeTransactionBlock({

@@ -30,6 +30,7 @@ import {
   MAX_EPOCH_LOCAL_STORAGE_KEY,
   RANDOMNESS_SESSION_STORAGE_KEY,
   REDIRECT_URI,
+  SUI_CLIENT,
   SUI_DEVNET_FAUCET,
   USER_SALT_LOCAL_STORAGE_KEY,
   WALLET_ADDRESS,
@@ -45,6 +46,7 @@ import useCopyToClipboard from "../../utils/hooks/useCopyToClipboard";
 
 import { formatAddress } from "@mysten/sui.js/utils";
 import { enqueueSnackbar } from "notistack";
+import getKeyPair from "../../utils/helpers/getKeyPair";
 
 const Wrapper = styled.section`
   ${WRAPPER_GENERAL_STYLES}
@@ -230,7 +232,6 @@ const PagesWrapper = ({ children, title, elementBelowTitle, isHome }) => {
       refetchInterval: 1500,
     }
   );
-  console.log({ addressBalance });
   useEffect(() => {
     const res = queryString.parse(location.hash);
     setOauthParams(res);
@@ -249,7 +250,7 @@ const PagesWrapper = ({ children, title, elementBelowTitle, isHome }) => {
         setUserSalt(salt);
         const zkLoginUserAddress = jwtToAddress(oauthParams?.id_token, salt);
         setZkLoginUserAddress(zkLoginUserAddress);
-        window.sessionStorage.setItem(WALLET_ADDRESS);
+        window.sessionStorage.setItem(WALLET_ADDRESS, zkLoginUserAddress);
       }
 
       if (userSalt) {
@@ -258,7 +259,7 @@ const PagesWrapper = ({ children, title, elementBelowTitle, isHome }) => {
           userSalt
         );
         setZkLoginUserAddress(zkLoginUserAddress);
-        window.sessionStorage.setItem(WALLET_ADDRESS);
+        window.sessionStorage.setItem(WALLET_ADDRESS, zkLoginUserAddress);
       }
     }
   }, [oauthParams]);
@@ -283,7 +284,7 @@ const PagesWrapper = ({ children, title, elementBelowTitle, isHome }) => {
       if (!!zkLoginUserAddress.length) {
         const jwt_data = JSON.parse(window.sessionStorage.getItem("jwt_data"));
         // if(!)
-        const keypair = getEd25519Keypair(jwt_data?.ephemeralKeyPair);
+        const keypair =  getKeyPair(jwt_data?.ephemeralKeyPair);
         const extendedEphemeralPublicKey = getExtendedEphemeralPublicKey(
           keypair.getPublicKey()
         );
@@ -461,7 +462,7 @@ const PagesWrapper = ({ children, title, elementBelowTitle, isHome }) => {
         ) : (
           <Button
             onClick={async () => {
-              const { epoch } = await suiClient.getLatestSuiSystemState();
+              const { epoch } = await SUI_CLIENT.getLatestSuiSystemState();
               const maxEpoch = Number(epoch) + 10;
 
               const ephemeralKeyPair = Ed25519Keypair.generate();
