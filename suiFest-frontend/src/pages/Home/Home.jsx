@@ -37,7 +37,6 @@ import {
   SUI_DEVNET_FAUCET,
   USER_SALT_LOCAL_STORAGE_KEY,
 } from "../../constants";
-import { getParams } from "../zklogin";
 import {
   decodeSuiPrivateKey,
   encodeSuiPrivateKey,
