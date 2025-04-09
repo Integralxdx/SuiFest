@@ -154,8 +154,8 @@ const Home = () => {
               width={256}
             />
           </CameraAnimationWrapper>
-          {HOME_CONTENTS.map((item) => (
-            <MainContentItem>
+          {HOME_CONTENTS.map((item,index) => (
+            <MainContentItem key={index}>
               <span style={{ color: item?.color }}>
                 {item?.value?.split(" ")[0]}
               </span>{" "}
