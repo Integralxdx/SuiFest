@@ -47,6 +47,8 @@ import useCopyToClipboard from "../../utils/hooks/useCopyToClipboard";
 import { formatAddress } from "@mysten/sui.js/utils";
 import { enqueueSnackbar } from "notistack";
 import getKeyPair from "../../utils/helpers/getKeyPair";
+import handleLogin from "./helpers/handleLogin";
+import { useLocation } from "react-router-dom";
 
 const Wrapper = styled.section`
   ${WRAPPER_GENERAL_STYLES}
@@ -188,6 +190,7 @@ const RequestSuiWrapper = styled.button`
   }
 `;
 const PagesWrapper = ({ children, title, elementBelowTitle, isHome }) => {
+  const  {hash}= useLocation()
   const [copied, setCopied] = useCopyToClipboard();
 
   const [copiedTimer, setStartCopiedTimer] = useState(false);
@@ -233,39 +236,44 @@ const PagesWrapper = ({ children, title, elementBelowTitle, isHome }) => {
     }
   );
   useEffect(() => {
-    const res = queryString.parse(location.hash);
+    const res = queryString.parse(hash);
     setOauthParams(res);
-  }, [location]);
+  }, [hash]);
 
   // query jwt id_token
   useEffect(() => {
     if (oauthParams && oauthParams.id_token) {
+      
+      
+      
+      // decode jwt 
       const decodedJwt = jwtDecode(oauthParams?.id_token);
-      window.sessionStorage.setItem("id_token", oauthParams?.id_token);
+      window.sessionStorage.setItem("suifest_id_token", oauthParams?.id_token);
       setJwtString(oauthParams?.id_token);
       setDecodedJwt(decodedJwt);
+      
+      // check local storage for salt presence before generating another 
+
+      let userSalt = window.localStorage.getItem(USER_SALT_LOCAL_STORAGE_KEY);
+      let salt = userSalt;
       if (!userSalt) {
-        const salt = generateRandomness();
+      salt = generateRandomness();
         window.localStorage.setItem(USER_SALT_LOCAL_STORAGE_KEY, salt);
         setUserSalt(salt);
-        const zkLoginUserAddress = jwtToAddress(oauthParams?.id_token, salt);
-        setZkLoginUserAddress(zkLoginUserAddress);
-        window.sessionStorage.setItem(WALLET_ADDRESS, zkLoginUserAddress);
-      }
-
-      if (userSalt) {
+      }else setUserSalt(userSalt)
+        
         const zkLoginUserAddress = jwtToAddress(
           oauthParams?.id_token,
-          userSalt
+          salt
         );
         setZkLoginUserAddress(zkLoginUserAddress);
         window.sessionStorage.setItem(WALLET_ADDRESS, zkLoginUserAddress);
-      }
+      
     }
-  }, [oauthParams]);
+  }, [oauthParams, userSalt]);
   useEffect(() => {
-    const id_token = window.sessionStorage.getItem("id_token");
-    if (!!id_token) {
+    const id_token = window.sessionStorage.getItem("suifest_id_token");
+    if (id_token) {
       const userSalt = window.localStorage.getItem(USER_SALT_LOCAL_STORAGE_KEY);
       if (userSalt) {
         const zkLoginUserAddress = jwtToAddress(id_token, userSalt);
@@ -281,7 +289,7 @@ const PagesWrapper = ({ children, title, elementBelowTitle, isHome }) => {
   }, []);
   useEffect(() => {
     (async function () {
-      if (!!zkLoginUserAddress.length) {
+      if (zkLoginUserAddress.length) {
         const jwt_data = JSON.parse(window.sessionStorage.getItem("jwt_data"));
         // if(!)
         const keypair =  getKeyPair(jwt_data?.ephemeralKeyPair);
@@ -289,6 +297,7 @@ const PagesWrapper = ({ children, title, elementBelowTitle, isHome }) => {
           keypair.getPublicKey()
         );
         setFetchingZKProof(true);
+        alert('hi')
         const zkProofResult = await axios.post(
           "https://prover-dev.mystenlabs.com/v1",
           {
@@ -315,7 +324,7 @@ const PagesWrapper = ({ children, title, elementBelowTitle, isHome }) => {
       }
     })();
     return () => {};
-  }, [zkLoginUserAddress]);
+  }, [oauthParams?.id_token, userSalt, zkLoginUserAddress]);
   useEffect(() => {
     const jwt_data = JSON.parse(window.sessionStorage.getItem("jwt_data"));
 
@@ -461,50 +470,7 @@ const PagesWrapper = ({ children, title, elementBelowTitle, isHome }) => {
           </BalanceLoggedWrapper>
         ) : (
           <Button
-            onClick={async () => {
-              const { epoch } = await SUI_CLIENT.getLatestSuiSystemState();
-              const maxEpoch = Number(epoch) + 10;
-
-              const ephemeralKeyPair = Ed25519Keypair.generate();
-
-              const randomness = generateRandomness();
-
-              const nonce = generateNonce(
-                ephemeralKeyPair.getPublicKey(),
-                maxEpoch,
-                randomness
-              );
-
-              setEphemeralKeyPair(ephemeralKeyPair);
-              setNonce(nonce);
-              setMaxEpoch(maxEpoch);
-              setRandomness(randomness);
-              window.sessionStorage.setItem(
-                "priv",
-                ephemeralKeyPair.export().privateKey
-              );
-
-              const jwtData = {
-                maxEpoch,
-                nonce,
-                randomness,
-                ephemeralKeyPair,
-              };
-
-              sessionStorage.setItem("jwt_data", JSON.stringify(jwtData));
-
-              const params = new URLSearchParams({
-                client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
-                redirect_uri: import.meta.env.DEV
-                  ? "http://localhost:5173"
-                  : REDIRECT_URI,
-                response_type: "id_token",
-                scope: "openid",
-                nonce: nonce,
-              });
-              const loginURL = `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
-              window.location.replace(loginURL);
-            }}
+            onClick={() => handleLogin(setEphemeralKeyPair  , setNonce, setMaxEpoch, setRandomness)}
           >
             Login
           </Button>
