@@ -1,36 +1,51 @@
 module suifest::suifest {
-    use sui::coin;
-    use sui::event;
-    use sui::sui::SUI;
-    use sui::url::{Self, Url};
-    use std::string::String;
     use sui::balance::{Self, Balance};
-    use sui::clock::Clock;
+    use sui::coin::{Self, Coin};
+    use sui::dynamic_field;
+    use sui::event;
+    use sui::object::{Self, ID, UID};
+    use sui::sui::SUI;
+    use sui::tx_context::{Self, TxContext};
+    use sui::transfer;
+    use sui::url::{Self, Url};
+    use sui::clock::{Self, Clock};
+    use std::string::{Self, String};
+
+    // === Constants ===
+    const E_NOT_HOST: u64 = 0;
+    const E_EVENT_FULL: u64 = 1;
+    const E_INSUFFICIENT_FUNDS: u64 = 2;
+    const E_ALREADY_REGISTERED: u64 = 3;
 
     // === Events ===
     public struct EventCreated has copy, drop {
-        id: ID,
+        event_id: ID,
         name: String,
         host: address,
         ticket_price: u64,
     }
 
     public struct EventEdited has copy, drop {
-        id: ID,
+        event_id: ID,
         name: String,
         ticket_price: u64,
     }
 
-    public struct AttendeeRegistered has copy, drop {
+    public struct TicketMinted has copy, drop {
         event_id: ID,
         attendee: address,
+        ticket_id: ID,
     }
 
-    // === Structs ===
-    public struct EventTicket has key, store {
+    public struct CheckedIn has copy, drop {
+        ticket_id: ID,
+        timestamp: u64,
+    }
+
+    // === Core Structs ===
+    public struct HostCapability has key {
         id: UID,
         event_id: ID,
-        attendee: address,
     }
 
     public struct Event has key {
@@ -39,82 +54,133 @@ module suifest::suifest {
         description: String,
         location: String,
         date: String,
-        host: address,
         ticket_price: u64,
         max_attendees: u64,
-        attendees: vector<address>
+        attendees_count: u64,
+        treasury: Balance<SUI>,
     }
 
-    // === Functions ===
-    public fun create_event(name: String, description: String, location: String, date: String, ticket_price: u64, max_attendees: u64, ctx: &mut TxContext) {
+    public struct EventTicket has key, store {
+        id: UID,
+        event_id: ID,
+        attendee: address,
+        checked_in: bool,
+        memories: vector<Url>,
+    }
+
+    // === Core Functions ===
+    public entry fun create_event(
+        name: String,
+        description: String,
+        location: String,
+        date: String,
+        ticket_price: u64,
+        max_attendees: u64,
+        ctx: &mut TxContext
+    ) {
         let host = tx_context::sender(ctx);
-        let eventObject = Event {
-            id: object::new(ctx),
+        let event_id = object::new(ctx);
+        
+        let event = Event {
+            id: event_id,
             name,
             description,
             location,
             date,
-            host,
             ticket_price,
             max_attendees,
-            attendees: vector::empty<address>()
+            attendees_count: 0,
+            treasury: balance::zero<SUI>(),
         };
 
+        transfer::transfer(
+            HostCapability {
+                id: object::new(ctx),
+                event_id: object::uid_to_inner(&event.id),
+            },
+            host
+        );
+
         event::emit(EventCreated {
-            id: eventObject.id.to_inner(),
-            name,
+            event_id: object::uid_to_inner(&event.id),
+            name: copy name,
             host,
             ticket_price,
         });
 
-        transfer::share_object(eventObject);
+        transfer::share_object(event);
     }
 
-    public fun edit_event(
+    public entry fun purchase_ticket(
         event: &mut Event,
-        new_name: String,
-        new_description: String,
-        new_location: String,
-        new_date: String,
-        new_ticket_price: u64,
-        new_max_attendees: u64,
+        payment: &mut Coin<SUI>,
         ctx: &mut TxContext
     ) {
-        assert!(tx_context::sender(ctx) == event.host, 0);
+        let attendee = tx_context::sender(ctx);
+        assert!(coin::value(payment) >= event.ticket_price, E_INSUFFICIENT_FUNDS);
+        assert!(event.attendees_count < event.max_attendees, E_EVENT_FULL);
 
-        event.name = new_name;
-        event.description = new_description;
-        event.location = new_location;
-        event.date = new_date;
-        event.ticket_price = new_ticket_price;
-        event.max_attendees = new_max_attendees;
+        // Split payment
+        let ticket_price = event.ticket_price;
+        let payment_balance = coin::into_balance(coin::split(payment, ticket_price, ctx));
+        balance::join(&mut event.treasury, payment_balance);
 
-        event::emit(EventEdited {
-            id: event.id.to_inner(),
-            name: new_name,
-            ticket_price: new_ticket_price,
-        });
-    }
-
-    public fun register_for_event(event: &mut Event, ctx: &mut TxContext): EventTicket {
-        assert!(vector::length(&event.attendees) < event.max_attendees, 0);
-
-        let attendee_address = tx_context::sender(ctx);
-        assert!(!vector::contains(&event.attendees, &attendee_address), 1);
-
-        vector::push_back(&mut event.attendees, attendee_address);
-
+        // Mint ticket
         let ticket = EventTicket {
             id: object::new(ctx),
             event_id: object::uid_to_inner(&event.id),
-            attendee: attendee_address,
+            attendee,
+            checked_in: false,
+            memories: vector::empty(),
         };
 
-        event::emit(AttendeeRegistered {
-            event_id: event.id.to_inner(),
-            attendee: attendee_address,
+        event.attendees_count = event.attendees_count + 1;
+
+        event::emit(TicketMinted {
+            event_id: object::uid_to_inner(&event.id),
+            attendee,
+            ticket_id: object::uid_to_inner(&ticket.id),
         });
 
-        ticket
+        transfer::transfer(ticket, attendee);
     }
+
+    public entry fun check_in(
+        ticket: &mut EventTicket,
+        clock: &Clock,
+        _ctx: &mut TxContext
+    ) {
+        assert!(!ticket.checked_in, E_ALREADY_REGISTERED);
+        ticket.checked_in = true;
+        
+        event::emit(CheckedIn {
+            ticket_id: object::uid_to_inner(&ticket.id),
+            timestamp: clock::timestamp_ms(clock),
+        });
+    }
+
+    public entry fun add_memory(
+        ticket: &mut EventTicket,
+        memory_url: String,  // Take ownership of the String
+        _cap: &HostCapability
+    ) {
+        // Convert String -> vector<u8> using proper method
+        let bytes = string::into_bytes(memory_url);
+        vector::push_back(
+            &mut ticket.memories, 
+            url::new_unsafe_from_bytes(bytes)  // Now passing vector<u8>
+        );
+    }
+
+    // public fun withdraw_earnings(
+    //     event: &mut Event,
+    //     _cap: &HostCapability,
+    //     ctx: &mut TxContext
+    // ): Coin<SUI> {
+    //     // Get full balance value
+    //     let amount = balance::value(&event.treasury);
+    //     // Split balance using coin module
+    //     let coin_balance = coin::withdraw(&mut event.treasury, amount);
+    //     coin::from_balance(coin_balance, ctx)
+    // }
 }

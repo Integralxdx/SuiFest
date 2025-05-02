@@ -5,11 +5,12 @@ compiled_package_info:
     std: "0000000000000000000000000000000000000000000000000000000000000001"
     sui: "0000000000000000000000000000000000000000000000000000000000000002"
     suifest: "0000000000000000000000000000000000000000000000000000000000000000"
-  source_digest: BEBF7CB8A275D34CD6A26D1D5A9B9E3E3F32645D4031EFD487CB5E97FB9767D6
+  source_digest: 751C02E0D73F80B8A7ECFB56D7D9E95850C86C64F989D51D77BD8179F28CE030
   build_flags:
     dev_mode: false
     test_mode: false
     generate_docs: false
+    save_disassembly: false
     install_dir: ~
     force_recompilation: false
     lock_file: "./Move.lock"
@@ -25,6 +26,47 @@ compiled_package_info:
     lint_flag:
       no_lint: false
       lint: false
+    implicit_dependencies:
+      Bridge:
+        Internal:
+          kind:
+            Git:
+              git_url: "https://github.com/MystenLabs/sui.git"
+              git_rev: 04f11afaf5e0
+              subdir: crates/sui-framework/packages/bridge
+          subst: ~
+          digest: ~
+          dep_override: true
+      MoveStdlib:
+        Internal:
+          kind:
+            Git:
+              git_url: "https://github.com/MystenLabs/sui.git"
+              git_rev: 04f11afaf5e0
+              subdir: crates/sui-framework/packages/move-stdlib
+          subst: ~
+          digest: ~
+          dep_override: true
+      Sui:
+        Internal:
+          kind:
+            Git:
+              git_url: "https://github.com/MystenLabs/sui.git"
+              git_rev: 04f11afaf5e0
+              subdir: crates/sui-framework/packages/sui-framework
+          subst: ~
+          digest: ~
+          dep_override: true
+      SuiSystem:
+        Internal:
+          kind:
+            Git:
+              git_url: "https://github.com/MystenLabs/sui.git"
+              git_rev: 04f11afaf5e0
+              subdir: crates/sui-framework/packages/sui-system
+          subst: ~
+          digest: ~
+          dep_override: true
 dependencies:
   - MoveStdlib
   - Sui
